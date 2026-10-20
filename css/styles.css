@@ -2197,23 +2197,10 @@ body.photo-hero .site-header.is-scrolled {
 
 .consult-close:hover { color: var(--paper); border-color: var(--paper); }
 
-.consult-notice {
-  margin: 0 0 var(--space-3);
-  font-size: var(--fs-small);
-  color: var(--mustard);
-}
-
-/* chris@clgrowthacademy.com.au is 28 characters with no break opportunity
-   in it, and at 700 weight it is wider than the dialog's content box on a
-   phone. anywhere, not break-word: break-word only breaks a word that
-   would overflow on its own line, which leaves the address to push the box
-   wider first. */
-.consult-direct {
-  margin: 0;
-  font-weight: 700;
-  overflow-wrap: anywhere;
-}
-
+/* A bare email address has no break opportunity in it and is wider than
+   the dialog's content box on a phone. anywhere, not break-word: break-word
+   only breaks a word that would overflow on its own line, which leaves the
+   address to push the box wider first. */
 .form-pill-success,
 .footer-grid li a { overflow-wrap: anywhere; }
 

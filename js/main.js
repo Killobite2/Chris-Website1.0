@@ -856,7 +856,6 @@
   var CONSULT_ACTION = W3F_ENDPOINT;
 
   function buildConsultDialog() {
-    var wired = CONSULT_ACTION.indexOf('YOUR_FORM_ID') === -1;
     var dlg = document.createElement('dialog');
     dlg.className = 'consult';
     dlg.innerHTML =
@@ -887,38 +886,26 @@
               '<div><label for="c-msg">What is going on with your marketing?</label>' +
               '<textarea id="c-msg" name="message" rows="4" required></textarea></div>' +
               '<div>' +
-                (wired
-                  ? '<div class="form-pill form-pill-compact"><div class="form-pill-fields">' +
-                    '<button type="submit" class="btn btn-mustard">Send it &rarr;</button>' +
-                    '</div>' +
-                    /* Web3Forms confirms the send, so this only shows on a
-                       real success. The direct email stays on it anyway for
-                       anyone who would rather not wait for a reply. */
-                    '<p class="form-pill-success" role="status">Message sent. ' +
-                    'If you would rather not wait, I am on ' +
-                    '<a href="mailto:chris@thegrowthacademy.com.au">chris@thegrowthacademy.com.au</a>' +
-                    '.</p></div>' +
-                    '<p class="form-error" role="alert" hidden>That did not send. ' +
-                    'Please reach me directly on ' +
-                    '<a href="mailto:chris@thegrowthacademy.com.au">chris@thegrowthacademy.com.au</a>' +
-                    ' or <a href="tel:+61431584725">+61 431 584 725</a>.</p>'
-                  /* Un-wired: no submit button at all. A disabled-looking
-                     button people still click, on a form that posts to a
-                     dead URL, is worse than saying so and handing them the
-                     two routes that do work.
+                '<div class="form-pill form-pill-compact"><div class="form-pill-fields">' +
+                '<button type="submit" class="btn btn-mustard">Send it &rarr;</button>' +
+                '</div>' +
+                /* Web3Forms confirms the send, so this only shows on a
+                   real success. The direct email stays on it anyway for
+                   anyone who would rather not wait for a reply.
 
-                     The address is @thegrowthacademy.com.au, NOT
-                     @clgrowthacademy.com.au. The latter has no MX records
-                     and resolves to a link-local address, so mail to it
-                     bounces: publishing it here, as the fallback offered
-                     precisely because the form is dead, was the worst
-                     version of this. Do not switch domains until
-                     clgrowthacademy.com.au has working mail. */
-                  : '<p class="consult-notice">This form is not connected yet. ' +
-                    'Reach me directly:</p>' +
-                    '<p class="consult-direct">' +
-                    '<a href="mailto:chris@thegrowthacademy.com.au">chris@thegrowthacademy.com.au</a><br>' +
-                    '<a href="tel:+61431584725">+61 431 584 725</a></p>') +
+                   The address is @thegrowthacademy.com.au, NOT
+                   @clgrowthacademy.com.au. The latter has no MX records and
+                   resolves to a link-local address, so mail to it bounces.
+                   Do not switch domains until clgrowthacademy.com.au has
+                   working mail. */
+                '<p class="form-pill-success" role="status">Message sent. ' +
+                'If you would rather not wait, I am on ' +
+                '<a href="mailto:chris@thegrowthacademy.com.au">chris@thegrowthacademy.com.au</a>' +
+                '.</p></div>' +
+                '<p class="form-error" role="alert" hidden>That did not send. ' +
+                'Please reach me directly on ' +
+                '<a href="mailto:chris@thegrowthacademy.com.au">chris@thegrowthacademy.com.au</a>' +
+                ' or <a href="tel:+61431584725">+61 431 584 725</a>.</p>' +
               '</div>' +
             '</div>' +
           '</form>' +
