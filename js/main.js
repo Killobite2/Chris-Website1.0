@@ -404,50 +404,116 @@
     }
   }
 
-  /* ---------------- Waitlist forms ----------------
+  /* ---------------- Waitlist and enquiry forms ----------------
 
-     A plain cross-origin POST to Beehiiv would navigate the visitor away
-     to Beehiiv's own confirmation page, so the on-page success copy would
-     never show. Intercept submit, fire the POST via a no-cors fetch
-     instead (the response is opaque, so this optimistically assumes
-     success once the request is sent), then morph the pill in place.
+     Two kinds of form share the .js-waitlist class, and they are sent
+     differently.
 
-     The endpoint guard below is the important part. Two of this site's
-     forms still point at a Formspree placeholder that was never filled
-     in. Intercepting one of those would show "You're on the list" for a
-     submission that reached nobody, which is worse than letting the POST
-     fail where the visitor can see it. So a placeholder action is left
-     entirely alone and reported to the console instead. */
+     NEWSLETTER (Beehiiv). A plain cross-origin POST would navigate the
+     visitor away to Beehiiv's own confirmation page, so the on-page
+     success copy would never show. Intercept submit, fire the POST via a
+     no-cors fetch instead (the response is opaque, so this optimistically
+     assumes success once the request is sent), then morph the pill.
 
-  function initWaitlistForms() {
-    var forms = document.querySelectorAll('.js-waitlist');
-    if (!forms.length) return;
+     ENQUIRY (Web3Forms): the consult dialog and contact.html. Web3Forms
+     answers CORS and returns JSON, so these sends are CONFIRMED, not
+     assumed: the success state only shows once Web3Forms says
+     {success: true}, and a failure shows an error with Chris's direct
+     email and phone instead. Submissions are emailed to the recipient set
+     in the Web3Forms dashboard (chris@thegrowthacademy.com.au), not to an
+     address written here.
 
-    forms.forEach(function (form) {
-      if (form.action.indexOf('YOUR_FORM_ID') !== -1) {
-        console.warn(
-          'Waitlist form not wired up: its action is still the Formspree ' +
-          'placeholder, so submissions go nowhere. Left un-intercepted on ' +
-          'purpose. A success message here would be a lie.', form
-        );
+     The access key is public by design. It only lets someone send TO
+     that inbox, never read from it, which is why Web3Forms documents it
+     for client-side use. The botcheck checkbox is Web3Forms' honeypot:
+     hidden from people, so a submission with it ticked is a bot and
+     Web3Forms drops it.
+
+     The placeholder guard stays. A form whose action is still
+     YOUR_FORM_ID is left entirely alone and reported to the console,
+     because showing a success state for a submission that reached nobody
+     is worse than letting the POST fail where the visitor can see it. */
+
+  var W3F_ENDPOINT = 'https://api.web3forms.com/submit';
+  var W3F_KEY = '20e51297-6939-43ef-94fe-527c33d09703';
+
+  function lockForm(form) {
+    // Nothing left to resubmit once the fields have faded out.
+    // textarea is in this list because the enquiry forms have one;
+    // without it the message stays editable after the form completes.
+    form.querySelectorAll('input, textarea, button').forEach(function (el) {
+      el.disabled = true;
+    });
+  }
+
+  function sendEnquiry(form, pill) {
+    var btn = form.querySelector('button[type="submit"]');
+    var err = form.querySelector('.form-error');
+    if (err) err.hidden = true;
+    if (form.dataset.sending) return;
+    form.dataset.sending = '1';
+
+    var label = btn ? btn.innerHTML : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Sending…';
+    }
+
+    var data = Object.fromEntries(new FormData(form));
+    if (!data.access_key) data.access_key = W3F_KEY;
+    // Which page the enquiry came from, so Chris can see what prompted it
+    data.page = window.location.href;
+
+    fetch(W3F_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(data)
+    })
+      .then(function (res) {
+        return res.json().then(function (json) {
+          if (!res.ok || !json.success) throw new Error(json.message || res.status);
+        });
+      })
+      .then(function () {
+        if (pill) pill.classList.add('is-submitted');
+        lockForm(form);
+      })
+      .catch(function (e) {
+        console.warn('Enquiry did not send:', e);
+        delete form.dataset.sending;
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = label;
+        }
+        if (err) err.hidden = false;
+      });
+  }
+
+  function bindWaitlistForm(form) {
+    if (form.dataset.bound) return;
+    form.dataset.bound = '1';
+
+    if (form.action.indexOf('YOUR_FORM_ID') !== -1) {
+      console.warn(
+        'Form not wired up: its action is still the Formspree ' +
+        'placeholder, so submissions go nowhere. Left un-intercepted on ' +
+        'purpose. A success message here would be a lie.', form
+      );
+      return;
+    }
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      // Native constraint validation has already passed by the time a
+      // submit event fires, so there is nothing to re-check here
+      var pill = form.querySelector('.form-pill');
+
+      if (form.action.indexOf('api.web3forms.com') !== -1) {
+        sendEnquiry(form, pill);
         return;
       }
 
-      form.addEventListener('submit', function (e) {
-        e.preventDefault();
-
-        // Native constraint validation has already passed by the time a
-        // submit event fires, so there is nothing to re-check here
-        var pill = form.querySelector('.form-pill');
-
-        // Serialise the WHOLE form. This used to hardcode
-        // 'email=' + the email input, which was fine while the only
-        // consumer was the single-field newsletter — but the consult
-        // dialog reuses this same .js-waitlist handler with name, phone
-        // and message fields, and those were being silently dropped.
-        // URLSearchParams keeps the body application/x-www-form-urlencoded,
-        // the content type the newsletter endpoint already accepts, and
-        // sets that header itself — so do not set it manually here.
         fetch(form.action, {
           method: 'POST',
           mode: 'no-cors',
@@ -464,15 +530,12 @@
         // The pill carries the state, not the form: the form has to stay
         // in the layout for the morph to happen in place
         if (pill) pill.classList.add('is-submitted');
-
-        // Nothing left to resubmit once the fields have faded out.
-        // textarea is in this list because the consult dialog has one;
-        // without it the message stays editable after the form completes.
-        form.querySelectorAll('input, textarea, button').forEach(function (el) {
-          el.disabled = true;
-        });
+        lockForm(form);
       });
-    });
+  }
+
+  function initWaitlistForms() {
+    document.querySelectorAll('.js-waitlist').forEach(bindWaitlistForm);
   }
 
   /* ---------------- Consult dialog ----------------
@@ -486,7 +549,7 @@
      box while footer and prose links still navigate. The href stays a real
      fallback, and contact.html stays a real page. */
 
-  var CONSULT_ACTION = 'https://formspree.io/f/YOUR_FORM_ID';
+  var CONSULT_ACTION = W3F_ENDPOINT;
 
   function buildConsultDialog() {
     var wired = CONSULT_ACTION.indexOf('YOUR_FORM_ID') === -1;
@@ -505,6 +568,11 @@
           '<h2>Straight to me.</h2>' +
           '<p class="consult-sub">Tell me what you are trying to grow. I will tell you straight whether I can help.</p>' +
           '<form class="js-waitlist" action="' + CONSULT_ACTION + '" method="POST">' +
+            '<input type="hidden" name="access_key" value="' + W3F_KEY + '">' +
+            '<input type="hidden" name="subject" value="New Free Growth Audit request">' +
+            '<input type="hidden" name="from_name" value="The Growth Academy Website">' +
+            '<input type="hidden" name="form" value="Free growth audit (popup)">' +
+            '<input type="checkbox" name="botcheck" class="form-botcheck" tabindex="-1" autocomplete="off" aria-hidden="true">' +
             '<div class="form-row stack">' +
               '<div><label for="c-name">Name</label>' +
               '<input id="c-name" type="text" name="name" autocomplete="name" required></div>' +
@@ -519,14 +587,17 @@
                   ? '<div class="form-pill form-pill-compact"><div class="form-pill-fields">' +
                     '<button type="submit" class="btn btn-mustard">Send it &rarr;</button>' +
                     '</div>' +
-                    /* The send is fire-and-forget (see the no-cors note in
-                       the submit handler), so this keeps the direct routes
-                       on screen: if the post quietly failed, the reader is
-                       not left believing a message arrived with no way back. */
+                    /* Web3Forms confirms the send, so this only shows on a
+                       real success. The direct email stays on it anyway for
+                       anyone who would rather not wait for a reply. */
                     '<p class="form-pill-success" role="status">Message sent. ' +
                     'If you would rather not wait, I am on ' +
                     '<a href="mailto:chris@thegrowthacademy.com.au">chris@thegrowthacademy.com.au</a>' +
-                    '.</p></div>'
+                    '.</p></div>' +
+                    '<p class="form-error" role="alert" hidden>That did not send. ' +
+                    'Please reach me directly on ' +
+                    '<a href="mailto:chris@thegrowthacademy.com.au">chris@thegrowthacademy.com.au</a>' +
+                    ' or <a href="tel:+61431584725">+61 431 584 725</a>.</p>'
                   /* Un-wired: no submit button at all. A disabled-looking
                      button people still click, on a form that posts to a
                      dead URL, is worse than saying so and handing them the
@@ -570,6 +641,10 @@
         '</div>' +
       '</div>';
     document.body.appendChild(dlg);
+
+    // Built after initWaitlistForms() has already run, so it has to be
+    // bound here or its submit would fall through to a plain POST
+    bindWaitlistForm(dlg.querySelector('form'));
 
     dlg.querySelector('.consult-close').addEventListener('click', function () {
       dlg.close();

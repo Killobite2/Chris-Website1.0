@@ -122,12 +122,16 @@
     <div class="grid grid-2">
       <div>
         <h2>Send a message</h2>
-        <!-- Chris: replace YOUR_FORM_ID in the action with your Formspree form ID
-             once you've created a free account at formspree.io. Until you do,
-             initWaitlistForms() in js/main.js deliberately refuses to intercept
-             this form or show the success state — a "message sent" confirmation
-             for a submission that went nowhere is worse than a visible error. -->
-        <form class="js-waitlist" action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
+        <!-- Sent through Web3Forms to the inbox set in its dashboard
+             (chris@thegrowthacademy.com.au). sendEnquiry() in js/main.js only
+             shows "Message sent" once Web3Forms confirms it; a failure shows
+             the error line with the direct email and phone instead. -->
+        <form class="js-waitlist" action="https://api.web3forms.com/submit" method="POST">
+          <input type="hidden" name="access_key" value="20e51297-6939-43ef-94fe-527c33d09703">
+          <input type="hidden" name="subject" value="New enquiry from the Contact page">
+          <input type="hidden" name="from_name" value="The Growth Academy Website">
+          <input type="hidden" name="form" value="Contact page">
+          <input type="checkbox" name="botcheck" class="form-botcheck" tabindex="-1" autocomplete="off" aria-hidden="true">
           <div class="form-row stack">
             <div>
               <label for="name">Name</label>
@@ -158,6 +162,7 @@
                   Message sent.
                 </p>
               </div>
+              <p class="form-error" role="alert" hidden>That did not send. Please reach me directly on <a href="mailto:chris@thegrowthacademy.com.au">chris@thegrowthacademy.com.au</a> or <a href="tel:+61431584725">+61 431 584 725</a>.</p>
             </div>
           </div>
         </form>

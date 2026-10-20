@@ -3961,3 +3961,25 @@ body.photo-hero .site-header.is-scrolled {
      nothing at runtime. */
   .article-progress { display: none; }
 }
+
+/* ---------------- Enquiry forms (Web3Forms) ---------------- */
+
+/* Web3Forms' honeypot. Off-screen rather than display:none, so a bot
+   that skips hidden inputs still sees a box to tick. */
+.form-botcheck {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+/* Shown only when Web3Forms does not confirm the send */
+.form-error {
+  margin: var(--space-3) 0 0;
+  font-size: var(--fs-small);
+  font-weight: 600;
+  color: var(--oxblood);
+}
+.form-error a { color: inherit; }
+.consult .form-error { color: var(--mustard); }

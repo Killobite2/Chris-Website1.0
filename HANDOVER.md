@@ -45,11 +45,12 @@ Reach me directly:" and then gave the dead address. The honest fallback did not 
 
 ## Waiting on Chris
 
-- **A Formspree form ID.** `contact.html` and `js/main.js` both carry
-  `YOUR_FORM_ID`, so 22 "Get a free growth audit" buttons open a dialog that says it
-  is not connected and offers email and phone instead. One ID from formspree.io
-  fixes every form at once. The site deliberately shows no submit button rather than
-  faking a success state.
+- ~~A Formspree form ID.~~ **Done 20 October 2026, with Web3Forms instead.** The
+  consult dialog and `contact.html` post to `api.web3forms.com/submit` with the
+  access key in `W3F_KEY` (`js/main.js`). Leads go to the recipient set in the
+  Web3Forms dashboard, currently `chris@thegrowthacademy.com.au`. The send is
+  confirmed (Web3Forms returns JSON), so the success state is real; a failure
+  shows an error line with the direct email and phone. Honeypot: `botcheck`.
 - **Copy for Referrals and Sales Process.** Both sit at roughly 520 words against
   their siblings' 900 to 1,600, because the feedback doc gives them four sections and
   no FAQ. Longer versions need his words, not invented ones.
@@ -61,9 +62,11 @@ Reach me directly:" and then gave the dead address. The honest fallback did not 
 
 ## Waiting on Dreau
 
-- **DNS for `thegrowthacademy.com.au`.** The domain is attached to the Vercel project
-  but served by nginx, still showing the old WordPress site. Parked deliberately
-  until the copy is signed off and the forms work.
+- ~~DNS for `thegrowthacademy.com.au`.~~ **Done 20 October 2026.** DNS is hosted at
+  SiteGround (GoDaddy is only the registrar). The `@` and `www` A records now point
+  at Vercel, `216.198.79.1`. Mail is Google Workspace (MX untouched). Keep the
+  SiteGround account: it still serves the DNS. The old WordPress install is still
+  there, reachable from SiteGround Site Tools, until it is retired.
 - **Nothing else.** Vercel Git is connected and auto-deploys on push, confirmed by a
   push that went live in 15 seconds.
 
